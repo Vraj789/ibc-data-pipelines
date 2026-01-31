@@ -230,6 +230,16 @@ def insert_into_consultants(cursor, row, user_id):
 if __name__ == "__main__":
     try:
         sheet_data = read_data_from_sheet()
+        logging.info(f"DEBUG keys: {list(sheet_data[0].keys())}")
+
+        logging.info(
+            "DEBUG sample values: "
+            f"beh_score={sheet_data[0].get('Behavioral Interview Score')!r}, "
+            f"beh_note={sheet_data[0].get('Behavioral Interview Note')!r}, "
+            f"case_score={sheet_data[0].get('Case Interview Score')!r}, "
+            f"case_note={sheet_data[0].get('Case Interview Note')!r}"
+        )
+
         if not sheet_data:
             raise SheetReadError("No data found in the sheet")
         for row in sheet_data:
