@@ -52,7 +52,11 @@ SHEET_COLS_TO_SQL_COLS = {
     "Industry Interests": "industry_interests",
     "Functional Area Interests": "functional_area_interests",    
     "Status": "status",
-    "Week Before Finals Availability": "week_before_finals_availability",         
+    "Week Before Finals Availability": "week_before_finals_availability", 
+    "Behavioral Interview Score": "behavioral_int_score",
+    "Behavioral Interview Note": "behavioral_int_notes",
+    "Case Interview Score": "case_int_score",
+    "Case Interview Note": "case_int_notes",        
 }
 
 # Required sheet columns for a row to be considered valid for processing.
