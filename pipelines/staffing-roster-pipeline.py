@@ -29,8 +29,8 @@ WEB_APP_URL = os.environ["WEB_APP_URL"]
 SHEET_NAME = os.environ["SHEET_NAME"]
 
 USERS_COLS = {"name", "email", "gender", "race", "us_citizen", "residency", "first_gen", "curr_role", "netid"}
-CONSULTANTS_COLS = {"year", "major", "minor", "college", "consultants_score", "semesters_in_ibc", "time_zone", "willing_to_travel", "industry_interests", "functional_area_interests", "status", "week_before_finals_availability", "user_id"}
-
+USERS_COLS = {"name", "email", "gender", "race", "us_citizen", "residency", "first_gen", "curr_role", "netid"}
+CONSULTANTS_COLS = {"year", "major", "minor", "college", "consultants_score", "semesters_in_ibc", "time_zone", "willing_to_travel", "industry_interests", "functional_area_interests", "status", "week_before_finals_availability", "user_id", "behavioral_int_score", "behavioral_int_notes", "case_int_score", "case_int_notes"}
 SHEET_COLS_TO_SQL_COLS = {
     "Name": "name",
     "Email": "email",
