@@ -28,9 +28,8 @@ logging.basicConfig(
 WEB_APP_URL = os.environ["WEB_APP_URL"]
 SHEET_NAME = os.environ["SHEET_NAME"]
 
-USERS_COLS = {"name", "email", "gender", "race", "us_citizen", "residency", "first_gen", "curr_role", "netid"}
-USERS_COLS = {"name", "email", "gender", "race", "us_citizen", "residency", "first_gen", "curr_role", "netid"}
-CONSULTANTS_COLS = {"year", "major", "minor", "college", "consultants_score", "semesters_in_ibc", "time_zone", "willing_to_travel", "industry_interests", "functional_area_interests", "status", "week_before_finals_availability", "user_id", "behavioral_int_score", "behavioral_int_notes", "case_int_score", "case_int_notes"}
+USERS_COLS = {"name", "email", "gender", "race", "us_citizen", "residency", "first_gen", "curr_role", "previous_role", "semesters_in_ibc", "netid"}
+CONSULTANTS_COLS = {"year", "major", "minor", "college", "consultants_score", "time_zone", "willing_to_travel", "industry_interests", "functional_area_interests", "status", "week_before_finals_availability", "user_id", "behavioral_int_score", "behavioral_int_notes", "case_int_score", "case_int_notes"}
 SHEET_COLS_TO_SQL_COLS = {
     "Name": "name",
     "Email": "email",
@@ -129,15 +128,24 @@ def parse_boolean(value):
         return value
     return False  
 
+def parse_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
 def insert_into_users(cursor, row):
     user_cols = []
     user_vals = []
     boolean_cols = {"us_citizen", "residency", "first_gen", "week_before_finals_availability"}
+    integer_cols = {"semesters_in_ibc"}
     for sheet_col, sql_col in SHEET_COLS_TO_SQL_COLS.items():
         if sheet_col in row and sql_col in USERS_COLS:
             val = row[sheet_col]
             if sql_col in boolean_cols:
                 val = parse_boolean(val)
+            elif sql_col in integer_cols:
+                val = parse_int(val)
             user_cols.append(sql_col)
             user_vals.append(None if val == "" else val)
     if not user_cols:
@@ -161,21 +169,40 @@ def get_user_id_by_email(cursor, email):
     result = cursor.fetchone()
     return result[0] if result else None
 
-def update_existing_user(cursor, row, user_id):
+def evaluate_previous_role(row, current_role_in_db):
+    new_role = row.get("Current Role")
+    if new_role and new_role.strip() and current_role_in_db and current_role_in_db != new_role:
+        return current_role_in_db
+    return None
+
+def update_existing_user(cursor, row, user_id, old_role=None):
     """Update an existing user's data."""
     user_cols = []
     user_vals = []
-    boolean_cols = {"us_citizen", "residency", "first_gen", "week_before_finals_availability"}
+    boolean_cols = {"us_citizen", "residency", "first_gen"}
+    integer_cols = {"semesters_in_ibc"}
+    
+    # Calculate previous role
+    previous_role = evaluate_previous_role(row, old_role)
+
     for sheet_col, sql_col in SHEET_COLS_TO_SQL_COLS.items():
         if sheet_col in row and sql_col in USERS_COLS:
             val = row[sheet_col]
             if sql_col in boolean_cols:
                 val = parse_boolean(val)
+            elif sql_col in integer_cols:
+                val = parse_int(val)
             if sql_col != "email":  # Don't update email as it's our unique key
                 user_cols.append(sql_col)
                 user_vals.append(None if val == "" else val)
+                
+    if previous_role:
+        user_cols.append("previous_role")
+        user_vals.append(previous_role)
+
     if not user_cols:
         return  # No fields to update
+        
     user_vals.append(user_id)  # For WHERE clause
     set_clause = ", ".join(f"{col} = %s" for col in user_cols)
     query = f"UPDATE users SET {set_clause} WHERE user_id = %s;"
@@ -191,10 +218,13 @@ def update_existing_consultant(cursor, row, user_id):
         # Update existing record
         consultant_cols = []
         consultant_vals = []
+        boolean_cols = {"week_before_finals_availability"}
         for sheet_col, sql_col in SHEET_COLS_TO_SQL_COLS.items():
             if sheet_col in row and sql_col in CONSULTANTS_COLS:
                 consultant_cols.append(sql_col)
                 val = row[sheet_col]
+                if sql_col in boolean_cols:
+                    val = parse_boolean(val)
                 consultant_vals.append(None if val == "" else val)
         for avail_col in ["availability_mon", "availability_tue", "availability_wed", "availability_thu", "availability_fri", "availability_sat", "availability_sun"]:
             if avail_col in row:
@@ -213,10 +243,13 @@ def insert_into_consultants(cursor, row, user_id):
     """Insert a new consultant record."""
     consultant_cols = []
     consultant_vals = []
+    boolean_cols = {"week_before_finals_availability"}
     for sheet_col, sql_col in SHEET_COLS_TO_SQL_COLS.items():
         if sheet_col in row and sql_col in CONSULTANTS_COLS:
             consultant_cols.append(sql_col)
             val = row[sheet_col]
+            if sql_col in boolean_cols:
+                val = parse_boolean(val)
             consultant_vals.append(None if val == "" else val)
     for avail_col in ["availability_mon", "availability_tue", "availability_wed", "availability_thu", "availability_fri", "availability_sat", "availability_sun"]:
         if avail_col in row:
@@ -280,8 +313,13 @@ if __name__ == "__main__":
                 existing_user_id = get_user_id_by_email(cursor, email) if email else None
                 
                 if existing_user_id:
+                    # Fetch old role before updating the users table
+                    cursor.execute("SELECT curr_role FROM users WHERE user_id = %s;", (existing_user_id,))
+                    res = cursor.fetchone()
+                    old_role = res[0] if res else None
+
                     # Update existing records
-                    update_existing_user(cursor, row, existing_user_id)
+                    update_existing_user(cursor, row, existing_user_id, old_role)
                     update_existing_consultant(cursor, row, existing_user_id)
                     logging.info(f"Updated existing user {row.get('Name', 'Unknown')} (user_id={existing_user_id}).")
                 else:
