@@ -1,4 +1,5 @@
 venv312
+venv
 .env
 GOOGLE_APPLICATION_CREDENTIALS.json
 *pipeline.log*

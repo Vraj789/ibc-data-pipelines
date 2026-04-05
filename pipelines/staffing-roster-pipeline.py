@@ -29,7 +29,7 @@ WEB_APP_URL = os.environ["WEB_APP_URL"]
 SHEET_NAME = os.environ["SHEET_NAME"]
 
 USERS_COLS = {"name", "email", "gender", "race", "us_citizen", "residency", "first_gen", "curr_role", "previous_role", "semesters_in_ibc", "netid"}
-CONSULTANTS_COLS = {"year", "major", "minor", "college", "consultants_score", "time_zone", "willing_to_travel", "industry_interests", "functional_area_interests", "status", "week_before_finals_availability", "user_id", "behavioral_int_score", "behavioral_int_notes", "case_int_score", "case_int_notes"}
+CONSULTANTS_COLS = {"year", "major", "minor", "college", "consultants_score", "time_zone", "willing_to_travel", "industry_interests", "functional_area_interests", "status", "week_before_finals_availability", "user_id", "behavioral_int_score", "behavioral_int_notes", "case_int_score", "case_int_notes", "behavioral_interviewer", "case_interviewer"}
 SHEET_COLS_TO_SQL_COLS = {
     "Name": "name",
     "Email": "email",
@@ -54,8 +54,10 @@ SHEET_COLS_TO_SQL_COLS = {
     "Week Before Finals Availability": "week_before_finals_availability", 
     "Behavioral Interview Score": "behavioral_int_score",
     "Behavioral Interview Note": "behavioral_int_notes",
+    "Behavioral Interviewer": "behavioral_interviewer",
     "Case Interview Score": "case_int_score",
-    "Case Interview Note": "case_int_notes",        
+    "Case Interview Note": "case_int_notes",
+    "Case Interviewer": "case_interviewer",
 }
 
 # Required sheet columns for a row to be considered valid for processing.
